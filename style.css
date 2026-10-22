@@ -1,0 +1,33 @@
+/* No CSS transitions or animations: everything that moves is moved by your code. */
+
+.shape {
+  width: 100px;
+  height: 100px;
+  background-color: deeppink;
+  /* Positioned from the top-left of the window; setPosition() moves it from there. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+}
+
+/* Prevent padding and border from affecting element width. */
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  font-family: system-ui, sans-serif;
+}
+
+kbd {
+  border: 1px solid #999;
+  border-radius: 0.25rem;
+  padding: 0 0.3rem;
+  font-family: inherit;
+}
