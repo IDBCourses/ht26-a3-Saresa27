@@ -39,7 +39,7 @@ let heat = 0;
 let lastX = 0;
 let lastY = 0;
 let lastTime = 0;
-let speed = [];
+let speeds = [];
 
 // ---------- Sound ----------
 // Make the instruments and plug them into the speakers.
@@ -49,7 +49,13 @@ const synth = new Tone.PolySynth(Tone.Synth).toDestination(); // can play severa
 // Update the state. This is called every 100ms.
 function update() {
   setTimeout(update, 100); // call update() again in 100 milliseconds
+  if (heat > 0) { // cooldown while heat is postive
+  heat -= coolRate;
+    if (heat < 0)
+      heat = 0;
+  }
 }
+
 
 // ---------- Use ----------
 // Use the state to make sound and move shapes. This is called every 100ms.
@@ -79,19 +85,20 @@ function pointerMove(event) {
   if (!inside) {
     return;
   }
-    let normX = event.clientX / window.innerWidth;
-    let normY = event.clientY / window.innerHeight;
-    let now = Date.now();
-    let distance = Math.hypot(normX - lastX, normY - lastY);
-    let seconds = (now- lastTime) / 1000;
-  if (seconds === 0) {
+    let normX = event.clientX / window.innerWidth; // pixels divided by window size = 0 to 1 (screens per second)
+    let normY = event.clientY / window.innerHeight; // screen per second
+    let now = Date.now(); // current time in milliseconds
+    let distance = Math.hypot(normX - lastX, normY - lastY); // the sstraight line distance between pointer was and where it is now
+    let seconds = (now- lastTime) / 1000; // time since last event converted into seconds
+  if (seconds === 0) { // requires time to have passed to avoid dividing by 0
     return;
   }
     let speed = distance / seconds;
     console.log(speed);
-    lastX = normX
-    lastY = normY
-    lastTime = now
+    lastX = normX // saving last normalX value
+    lastY = normY // saving last normalY value
+    lastTime = now // all three save the position so the next event can compare against them
+    heat += (speed * heatGain); // calculates how fast the
 }
 
 // ---------- Setup ----------
