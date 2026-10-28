@@ -27,11 +27,11 @@ import { createShape } from "./shape.js";
 // Settings variables should contain all of the "fixed" parts of your programs
 // For example: which notes you can play, how fast things move, the tempo.
 const note = "C4"; // the note played when the pointer goes down
-const heatGain = 0.1;
+const heatGain = 0.08;
 const coolRate = 0.05;
 const heatShape = createShape("heatShape");
-const minSize = 50; // minimum size value
-const maxSize = 100; // max size value
+const minSize = 100; // minimum size value
+const maxSize = 200; // max size value
 
 // ---------- State ----------
 // State variables are the parts of your program that change over time.
@@ -41,6 +41,7 @@ let heat = 0;
 let lastX = 0;
 let lastY = 0;
 let lastTime = 0;
+let playing = false;
 
 
 // ---------- Sound ----------
@@ -51,6 +52,7 @@ const synth = new Tone.PolySynth(Tone.Synth).toDestination(); // can play severa
 // Update the state. This is called every 100ms.
 function update() {
   setTimeout(update, 100); // call update() again in 100 milliseconds
+
   if (heat > 0) { // cooldown while heat is postive
   heat -= coolRate;
     if (heat < 0) // sets a floor for heat so it doesn't go below 0
@@ -66,8 +68,14 @@ function use() {
   setTimeout(use, 100); // call use() again in 100 milliseconds
   // fact: heat is a value between 0 and 1
   // use heat to scale the shape size from "min" to "max" (lerp)
-  let size = minSize + ((maxSize - minSize) * heat);
-  heatShape.setSize(size);
+   let size = minSize + ((maxSize - minSize) * heat);
+    heatShape.setSize(size);
+
+  if (playing && !inside && heat === 0) {
+    synth.triggerRelease(note);
+    playing = false;
+  }
+
 
 }
 
@@ -87,14 +95,19 @@ function normalize(x, y) {
 
 function pointerEnter(event) {
   inside = true;
+  const normalized = normalize(event.x, event.y);
+  lastX = normalized.x;
+  lastY = normalized.y;
+  lastTime = Date.now();
 
-
-  console.log(normalize(event.clientX, event.clientY));
-  synth.triggerAttackRelease(note, "8n"); // play the note for an eighth note
+  if (!playing) {
+    synth.triggerAttack (note); // play the note
+    playing = true;
+  }
 }
 function pointerLeave(event) {
   inside = false;
-  console.log(normalize(event.clientX, event.clientY))
+  console.log(normalize(event.x, event.y))
 }
 
 function pointerMove(event) {
@@ -104,10 +117,8 @@ function pointerMove(event) {
 
   const normalized = normalize(event.x, event.y)
 
-  let normX = normalized.x
-  let normY = normalized.y
   let now = Date.now(); // current time in milliseconds
-  let distance = Math.hypot(normX - lastX, normY - lastY); // the sstraight line distance between pointer was and where it is now
+  let distance = Math.hypot(normalized.x - lastX, normalized.y - lastY); // the sstraight line distance between pointer was and where it is now
   let seconds = (now- lastTime) / 1000; // time since last event converted into seconds
 
   if (seconds === 0) { // requires time to have passed to avoid dividing by 0
@@ -116,11 +127,11 @@ function pointerMove(event) {
 
   let speed = distance / seconds;
   console.log(speed);
-  lastX = normX // saving last normalX value
-  lastY = normY // saving last normalY value
+  lastX = normalized.x; // saving last normalX value
+  lastY = normalized.y; // saving last normalY value
   lastTime = now // all three save the position so the next event can compare against them
 
-  if (heat < 1) { // heat up if heat is less than 1 
+  if (heat < 1) { // heat up if heat is less than 1
     heat += (speed * heatGain);
     if (heat > 1) // sets a cap for heat so it doesn't go above 1
       heat = 1;
@@ -131,7 +142,7 @@ function pointerMove(event) {
 // Setup is run once, at the start of the program. It sets everything up for us!
 function setup() {
   heatShape.setPosition(0.4, 0.3);
-  heatShape.setSize();
+  heatShape.setSize(minSize);
   update(); // start the update loop
   use(); // start the use loop
 
