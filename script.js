@@ -24,7 +24,6 @@
 import { createShape } from "./shape.js";
 
 // ---------- Settings ----------
-const notes = ["C4", "E4", "G4"]; // the note played when the pointer goes down
 const settings = {
   heatGain: 0.05,
   coolRate: 0.01,
@@ -34,48 +33,59 @@ const settings = {
   maxVolume: 0,
   coldHue: 200,
   hotHue: 10,
-  positions: [
-    { x: 0.3, y: 0.4 },
-    { x: 0.5, y: 0.5 },
-    { x: 0.7, y: 0.4 },
-  ],
 };
 
 // ---------- State ----------
 // State variables are the parts of your program that change over time.
 // For example: where the pointer is, how fast it's moving, or whether a drone is on.
-let isInside = [false, false, false];
-let heats = [0, 0, 0];
 let lastX = 0;
 let lastY = 0;
 let lastTime = 0;
-let isPlaying = [false, false, false];
+let shapes2 = [
+  {
+    isInside: false,
+    isPlaying: false,
+    heat: 0,
+    position: { x: 0.3, y: 0.4 },
+    note: "C4",
+    shape: createShape(),
+    synth: new Tone.PolySynth(Tone.Synth).toDestination(),
+  },
+  {
+    isInside: false,
+    isPlaying: false,
+    heat: 0,
+    position: { x: 0.5, y: 0.5 },
+    note: "E4",
+    shape: createShape(),
+    synth: new Tone.PolySynth(Tone.Synth).toDestination(),
+  },
+  {
+    isInside: false,
+    isPlaying: false,
+    heat: 0,
+    position: { x: 0.7, y: 0.4 },
+    note: "G4",
+    shape: createShape(),
+    synth: new Tone.PolySynth(Tone.Synth).toDestination(),
+  },
+];
 
 // ---------- Sound ----------
 // Make the instruments and plug them into the speakers.
-const synth1 = new Tone.PolySynth(Tone.Synth).toDestination(); // can play several notes at once
-const synth2 = new Tone.PolySynth(Tone.Synth).toDestination();
-const synth3 = new Tone.PolySynth(Tone.Synth).toDestination();
-const synths = [synth1, synth2, synth3];
-
-// ---------- Shapes ----------
-const shape1 = createShape();
-const shape2 = createShape();
-const shape3 = createShape();
-const shapes = [shape1, shape2, shape3];
 
 // ---------- Update ----------
 // Update the state. This is called every 10ms.
 function update() {
   setTimeout(update, 10); // schedule next call
 
-  for (let i = 0; i < heats.length; i++) {
-    if (heats[i] > 0) {
+  for (let i = 0; i < shapes2.length; i++) {
+    if (shapes2[i].heat > 0) {
       // cooldown while heat is postive
-      heats[i] -= settings.coolRate;
-      if (heats[i] < 0)
+      shapes2[i].heat -= settings.coolRate;
+      if (shapes2[i].heat < 0)
         // sets a floor for heat so it doesn't go below 0
-        heats[i] = 0;
+        shapes2[i].heat = 0;
     }
   }
 }
@@ -85,21 +95,19 @@ function update() {
 function use() {
   setTimeout(use, 10); // schedule next call
 
-  for (let i = 0; i < shapes.length; i++) {
-    let heat = heats[i];
+  for (let i = 0; i < shapes2.length; i++) {
+    let heat = shapes2[i].heat;
     // Use heat to scale the shape size between "min" and "max"
-    let shape = shapes[i];
-    let size =
-      settings.minSize + (settings.maxSize - settings.minSize) * heat;
+    let shape = shapes2[i].shape;
+    let size = settings.minSize + (settings.maxSize - settings.minSize) * heat;
     shape.setSize(size);
-
 
     // Keep the shape positioned on its center
     const sizeXNorm = size / window.innerWidth;
     const sizeYNorm = size / window.innerHeight;
     shape.setPosition(
-      settings.positions[i].x - sizeXNorm / 2,
-      settings.positions[i].y - sizeYNorm / 2,
+      shapes2[i].position.x - sizeXNorm / 2,
+      shapes2[i].position.y - sizeYNorm / 2,
     );
 
     // Change color
@@ -108,14 +116,15 @@ function use() {
     );
 
     // Change volume
-    let synth = synths[i];
-    synth.volume.value = settings.minVolume + heat * (settings.maxVolume - settings.minVolume);
+    let synth = shapes2[i].synth;
+    synth.volume.value =
+      settings.minVolume + heat * (settings.maxVolume - settings.minVolume);
 
-    let playing = isPlaying[i];
-    let inside = isInside[i];
+    let playing = shapes2[i].isPlaying;
+    let inside = shapes2[i].isInside;
     if (playing && !inside && heat === 0) {
-      synth.triggerRelease(notes[i]);
-      isPlaying[i] = false;
+      synth.triggerRelease(shapes2[i].note);
+      shapes2[i].isPlaying = false;
     }
   }
 }
@@ -134,21 +143,20 @@ function normalizePosition(x, y) {
 }
 
 function shapeEnter(event, shapeIndex) {
-  isInside[shapeIndex] = true;
+  shapes2[shapeIndex].isInside = true;
   const normPos = normalizePosition(event.x, event.y);
   lastX = normPos.x;
   lastY = normPos.y;
   lastTime = Date.now();
 
-  if (!isPlaying[shapeIndex]) {
-    synths[shapeIndex].triggerAttack(notes[shapeIndex]); // play the note
-    isPlaying[shapeIndex] = true;
+  if (!shapes2[shapeIndex].isPlaying) {
+    shapes2[shapeIndex].synth.triggerAttack(shapes2[shapeIndex].note); // play the note
+    shapes2[shapeIndex].isPlaying = true;
   }
 }
 
 function pointerEnter1(event) {
   shapeEnter(event, 0);
-
 }
 
 function pointerEnter2(event) {
@@ -159,14 +167,12 @@ function pointerEnter3(event) {
   shapeEnter(event, 2);
 }
 
-
 function shapeLeave(shapeIndex) {
-  isInside[shapeIndex] = false;
+  shapes2[shapeIndex].isInside = false;
 }
 
 function pointerLeave1(event) {
   shapeLeave(0);
-
 }
 
 function pointerLeave2(event) {
@@ -178,7 +184,7 @@ function pointerLeave3(event) {
 }
 
 function shapeMove(event, shapeIndex) {
-  if (!isInside[shapeIndex]) {
+  if (!shapes2[shapeIndex].isInside) {
     return;
   }
 
@@ -198,19 +204,17 @@ function shapeMove(event, shapeIndex) {
   lastY = normPos.y; // saving last normalY value
   lastTime = now; // all three save the position so the next event can compare against them
 
-  if (heats[shapeIndex] < 1) {
+  if (shapes2[shapeIndex].heat < 1) {
     // heat up if heat is less than 1
-    heats[shapeIndex] += speed * settings.heatGain;
-    if (heats[shapeIndex] > 1)
+    shapes2[shapeIndex].heat += speed * settings.heatGain;
+    if (shapes2[shapeIndex].heat > 1)
       // sets a cap for heat so it doesn't go above 1
-      heats[shapeIndex] = 1;
+      shapes2[shapeIndex].heat = 1;
   }
-
 }
 
 function pointerMove1(event) {
   shapeMove(event, 0);
-
 }
 
 function pointerMove2(event) {
@@ -224,9 +228,9 @@ function pointerMove3(event) {
 // Setup is run once, at the start of the program. It sets everything up for us!
 function setup() {
   // Initialize shape
-  for (let i = 0; i < shapes.length; i++) {
-    let shape = shapes[i];
-    shape.setPosition(settings.positions[i].x, settings.positions[i].y);
+  for (let i = 0; i < shapes2.length; i++) {
+    let shape = shapes2[i].shape;
+    shape.setPosition(shapes2[i].position.x, shapes2[i].position.y);
     shape.setSize(settings.minSize);
     shape.setColour(settings.coldHue);
   }
@@ -238,15 +242,15 @@ function setup() {
   window.addEventListener("pointerdown", pointerDown);
   // window.addEventListener("pointermove", pointerMove);
 
-  shapes[0].element.addEventListener("pointerenter", pointerEnter1);
-  shapes[1].element.addEventListener("pointerenter", pointerEnter2);
-  shapes[2].element.addEventListener("pointerenter", pointerEnter3);
-  shapes[0].element.addEventListener("pointerleave", pointerLeave1);
-  shapes[1].element.addEventListener("pointerleave", pointerLeave2);
-  shapes[2].element.addEventListener("pointerleave", pointerLeave3);
-  shapes[0].element.addEventListener("pointermove", pointerMove1);
-  shapes[1].element.addEventListener("pointermove", pointerMove2);
-  shapes[2].element.addEventListener("pointermove", pointerMove3);
+  shapes2[0].shape.element.addEventListener("pointerenter", pointerEnter1);
+  shapes2[1].shape.element.addEventListener("pointerenter", pointerEnter2);
+  shapes2[2].shape.element.addEventListener("pointerenter", pointerEnter3);
+  shapes2[0].shape.element.addEventListener("pointerleave", pointerLeave1);
+  shapes2[1].shape.element.addEventListener("pointerleave", pointerLeave2);
+  shapes2[2].shape.element.addEventListener("pointerleave", pointerLeave3);
+  shapes2[0].shape.element.addEventListener("pointermove", pointerMove1);
+  shapes2[1].shape.element.addEventListener("pointermove", pointerMove2);
+  shapes2[2].shape.element.addEventListener("pointermove", pointerMove3);
 }
 
 setup(); // Always remember to call setup()!
