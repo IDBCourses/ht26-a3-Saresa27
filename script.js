@@ -24,7 +24,7 @@
 import { createShape } from "./shape.js";
 
 // ---------- Settings ----------
-const note = ["C4", "E4", "G4"]; // the note played when the pointer goes down
+const notes = ["C4", "E4", "G4"]; // the note played when the pointer goes down
 const settings = {
   heatGain: 0.05,
   coolRate: 0.01,
@@ -35,9 +35,9 @@ const settings = {
   coldHue: 200,
   hotHue: 10,
   positions: [
-    { x: 0.2, y: 0.2 },
-    { x: 0.5, y: 0.4 },
-    { x: 0.8, y: 0.8 },
+    { x: 0.3, y: 0.4 },
+    { x: 0.5, y: 0.5 },
+    { x: 0.7, y: 0.4 },
   ],
 };
 
@@ -114,8 +114,8 @@ function use() {
     let playing = isPlaying[i];
     let inside = isInside[i];
     if (playing && !inside && heat === 0) {
-      synth.triggerRelease(note);
-      playing = false;
+      synth.triggerRelease(notes[i]);
+      isPlaying[i] = false;
     }
   }
 }
@@ -141,7 +141,7 @@ function shapeEnter(event, shapeIndex) {
   lastTime = Date.now();
 
   if (!isPlaying[shapeIndex]) {
-    synths[shapeIndex].triggerAttack(note[shapeIndex]); // play the note
+    synths[shapeIndex].triggerAttack(notes[shapeIndex]); // play the note
     isPlaying[shapeIndex] = true;
   }
 }
@@ -162,7 +162,6 @@ function pointerEnter3(event) {
 
 function shapeLeave(shapeIndex) {
   isInside[shapeIndex] = false;
-  // console.log(normalizePosition(event.x, event.y))
 }
 
 function pointerLeave1(event) {
@@ -195,7 +194,6 @@ function shapeMove(event, shapeIndex) {
   }
 
   let speed = distance / seconds;
-  // console.log(speed);
   lastX = normPos.x; // saving last normalX value
   lastY = normPos.y; // saving last normalY value
   lastTime = now; // all three save the position so the next event can compare against them
