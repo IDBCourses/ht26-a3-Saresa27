@@ -41,7 +41,7 @@ const settings = {
 let lastX = 0;
 let lastY = 0;
 let lastTime = 0;
-let shapes2 = [
+let hotSpot = [
   {
     isInside: false,
     isPlaying: false,
@@ -71,21 +71,19 @@ let shapes2 = [
   },
 ];
 
-// ---------- Sound ----------
-// Make the instruments and plug them into the speakers.
 
 // ---------- Update ----------
 // Update the state. This is called every 10ms.
 function update() {
   setTimeout(update, 10); // schedule next call
 
-  for (let i = 0; i < shapes2.length; i++) {
-    if (shapes2[i].heat > 0) {
+  for (let i = 0; i < hotSpot.length; i++) {
+    if (hotSpot[i].heat > 0) {
       // cooldown while heat is postive
-      shapes2[i].heat -= settings.coolRate;
-      if (shapes2[i].heat < 0)
+      hotSpot[i].heat -= settings.coolRate;
+      if (hotSpot[i].heat < 0)
         // sets a floor for heat so it doesn't go below 0
-        shapes2[i].heat = 0;
+        hotSpot[i].heat = 0;
     }
   }
 }
@@ -95,10 +93,10 @@ function update() {
 function use() {
   setTimeout(use, 10); // schedule next call
 
-  for (let i = 0; i < shapes2.length; i++) {
-    let heat = shapes2[i].heat;
+  for (let i = 0; i < hotSpot.length; i++) {
+    let heat = hotSpot[i].heat;
     // Use heat to scale the shape size between "min" and "max"
-    let shape = shapes2[i].shape;
+    let shape = hotSpot[i].shape;
     let size = settings.minSize + (settings.maxSize - settings.minSize) * heat;
     shape.setSize(size);
 
@@ -106,8 +104,8 @@ function use() {
     const sizeXNorm = size / window.innerWidth;
     const sizeYNorm = size / window.innerHeight;
     shape.setPosition(
-      shapes2[i].position.x - sizeXNorm / 2,
-      shapes2[i].position.y - sizeYNorm / 2,
+      hotSpot[i].position.x - sizeXNorm / 2,
+      hotSpot[i].position.y - sizeYNorm / 2,
     );
 
     // Change color
@@ -116,15 +114,15 @@ function use() {
     );
 
     // Change volume
-    let synth = shapes2[i].synth;
+    let synth = hotSpot[i].synth;
     synth.volume.value =
       settings.minVolume + heat * (settings.maxVolume - settings.minVolume);
 
-    let playing = shapes2[i].isPlaying;
-    let inside = shapes2[i].isInside;
+    let playing = hotSpot[i].isPlaying;
+    let inside = hotSpot[i].isInside;
     if (playing && !inside && heat === 0) {
-      synth.triggerRelease(shapes2[i].note);
-      shapes2[i].isPlaying = false;
+      synth.triggerRelease(hotSpot[i].note);
+      hotSpot[i].isPlaying = false;
     }
   }
 }
@@ -143,48 +141,26 @@ function normalizePosition(x, y) {
 }
 
 function shapeEnter(event, shapeIndex) {
-  shapes2[shapeIndex].isInside = true;
+  hotSpot[shapeIndex].isInside = true;
   const normPos = normalizePosition(event.x, event.y);
   lastX = normPos.x;
   lastY = normPos.y;
   lastTime = Date.now();
 
-  if (!shapes2[shapeIndex].isPlaying) {
-    shapes2[shapeIndex].synth.triggerAttack(shapes2[shapeIndex].note); // play the note
-    shapes2[shapeIndex].isPlaying = true;
+  if (!hotSpot[shapeIndex].isPlaying) {
+    hotSpot[shapeIndex].synth.triggerAttack(hotSpot[shapeIndex].note); // play the note
+    hotSpot[shapeIndex].isPlaying = true;
   }
 }
 
-function pointerEnter1(event) {
-  shapeEnter(event, 0);
-}
-
-function pointerEnter2(event) {
-  shapeEnter(event, 1);
-}
-
-function pointerEnter3(event) {
-  shapeEnter(event, 2);
-}
 
 function shapeLeave(shapeIndex) {
-  shapes2[shapeIndex].isInside = false;
+  hotSpot[shapeIndex].isInside = false;
 }
 
-function pointerLeave1(event) {
-  shapeLeave(0);
-}
-
-function pointerLeave2(event) {
-  shapeLeave(1);
-}
-
-function pointerLeave3(event) {
-  shapeLeave(2);
-}
 
 function shapeMove(event, shapeIndex) {
-  if (!shapes2[shapeIndex].isInside) {
+  if (!hotSpot[shapeIndex].isInside) {
     return;
   }
 
@@ -204,53 +180,34 @@ function shapeMove(event, shapeIndex) {
   lastY = normPos.y; // saving last normalY value
   lastTime = now; // all three save the position so the next event can compare against them
 
-  if (shapes2[shapeIndex].heat < 1) {
+  if (hotSpot[shapeIndex].heat < 1) {
     // heat up if heat is less than 1
-    shapes2[shapeIndex].heat += speed * settings.heatGain;
-    if (shapes2[shapeIndex].heat > 1)
+    hotSpot[shapeIndex].heat += speed * settings.heatGain;
+    if (hotSpot[shapeIndex].heat > 1)
       // sets a cap for heat so it doesn't go above 1
-      shapes2[shapeIndex].heat = 1;
+      hotSpot[shapeIndex].heat = 1;
   }
 }
 
-function pointerMove1(event) {
-  shapeMove(event, 0);
-}
-
-function pointerMove2(event) {
-  shapeMove(event, 1);
-}
-
-function pointerMove3(event) {
-  shapeMove(event, 2);
-}
 // ---------- Setup ----------
 // Setup is run once, at the start of the program. It sets everything up for us!
 function setup() {
-  // Initialize shape
-  for (let i = 0; i < shapes2.length; i++) {
-    let shape = shapes2[i].shape;
-    shape.setPosition(shapes2[i].position.x, shapes2[i].position.y);
+  // Initialize each shape and attaches it's listener
+  for (let i = 0; i < hotSpot.length; i++) {
+    let shape = hotSpot[i].shape;
+    shape.setPosition(hotSpot[i].position.x, hotSpot[i].position.y);
     shape.setSize(settings.minSize);
     shape.setColour(settings.coldHue);
+
+    shape.element.addEventListener("pointerenter", (event) => shapeEnter(event, i));
+    shape.element.addEventListener("pointerleave", () => shapeLeave(i));
+    shape.element.addEventListener("pointermove", (event) => shapeMove(event, i));
   }
+
+  window.addEventListener("pointerdown", pointerDown); // event listener for pointer down on the window
 
   update(); // start the update loop
   use(); // start the use loop
-
-  // Put your event listener code here
-  window.addEventListener("pointerdown", pointerDown);
-  // window.addEventListener("pointermove", pointerMove);
-
-  shapes2[0].shape.element.addEventListener("pointerenter", pointerEnter1);
-  shapes2[1].shape.element.addEventListener("pointerenter", pointerEnter2);
-  shapes2[2].shape.element.addEventListener("pointerenter", pointerEnter3);
-  shapes2[0].shape.element.addEventListener("pointerleave", pointerLeave1);
-  shapes2[1].shape.element.addEventListener("pointerleave", pointerLeave2);
-  shapes2[2].shape.element.addEventListener("pointerleave", pointerLeave3);
-  shapes2[0].shape.element.addEventListener("pointermove", pointerMove1);
-  shapes2[1].shape.element.addEventListener("pointermove", pointerMove2);
-  shapes2[2].shape.element.addEventListener("pointermove", pointerMove3);
 }
 
 setup(); // Always remember to call setup()!
