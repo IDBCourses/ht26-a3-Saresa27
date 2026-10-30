@@ -140,27 +140,27 @@ function normalizePosition(x, y) {
   };
 }
 
-function shapeEnter(event, shapeIndex) {
-  hotSpot[shapeIndex].isInside = true;
+function shapeEnter(event, hotSpot) {
+  hotSpot.isInside = true;
   const normPos = normalizePosition(event.x, event.y);
   lastX = normPos.x;
   lastY = normPos.y;
   lastTime = Date.now();
 
-  if (!hotSpot[shapeIndex].isPlaying) {
-    hotSpot[shapeIndex].synth.triggerAttack(hotSpot[shapeIndex].note); // play the note
-    hotSpot[shapeIndex].isPlaying = true;
+  if (!hotSpot.isPlaying) {
+    hotSpot.synth.triggerAttack(hotSpot.note); // play the note
+    hotSpot.isPlaying = true;
   }
 }
 
 
-function shapeLeave(shapeIndex) {
-  hotSpot[shapeIndex].isInside = false;
+function shapeLeave(hotSpot) {
+  hotSpot.isInside = false;
 }
 
 
-function shapeMove(event, shapeIndex) {
-  if (!hotSpot[shapeIndex].isInside) {
+function shapeMove(event, hotSpot) {
+  if (!hotSpot.isInside) {
     return;
   }
 
@@ -180,12 +180,12 @@ function shapeMove(event, shapeIndex) {
   lastY = normPos.y; // saving last normalY value
   lastTime = now; // all three save the position so the next event can compare against them
 
-  if (hotSpot[shapeIndex].heat < 1) {
+  if (hotSpot.heat < 1) {
     // heat up if heat is less than 1
-    hotSpot[shapeIndex].heat += speed * settings.heatGain;
-    if (hotSpot[shapeIndex].heat > 1)
+    hotSpot.heat += speed * settings.heatGain;
+    if (hotSpot.heat > 1)
       // sets a cap for heat so it doesn't go above 1
-      hotSpot[shapeIndex].heat = 1;
+      hotSpot.heat = 1;
   }
 }
 
@@ -199,9 +199,9 @@ function setup() {
     shape.setSize(settings.minSize);
     shape.setColour(settings.coldHue);
 
-    shape.element.addEventListener("pointerenter", (event) => shapeEnter(event, i));
-    shape.element.addEventListener("pointerleave", () => shapeLeave(i));
-    shape.element.addEventListener("pointermove", (event) => shapeMove(event, i));
+    shape.element.addEventListener("pointerenter", (event) => shapeEnter(event, hotSpot[i]));
+    shape.element.addEventListener("pointerleave", () => shapeLeave(hotSpot[i]));
+    shape.element.addEventListener("pointermove", (event) => shapeMove(event, hotSpot[i]));
   }
 
   window.addEventListener("pointerdown", pointerDown); // event listener for pointer down on the window
