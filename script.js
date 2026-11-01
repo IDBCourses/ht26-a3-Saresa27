@@ -50,7 +50,7 @@ let hotSpots = [
     isInside: false, // is the pointer currently over the shape?
     isPlaying: false, // is the note currently sounding?
     heat: 0, // 0 (cold) to 1 (hot), what makes the shape grow, change color, and volume
-    position: { x: 0.35, y: 0.4 }, // poisition of the shape
+    position: { x: 0.35, y: 0.4 }, // position of the shape
     note: "C4", // the note the shape plays
     shape: createShape(), // the visual element
     synth: new Tone.PolySynth(Tone.Synth).toDestination(), // the sound source for this shape
@@ -182,9 +182,9 @@ function shapeLeave(hotSpots) {
   hotSpots.isInside = false;
 }
 
-// Runs every time the pointer moves over a shpae. faster movement adds more heat
+// Runs every time the pointer moves over a shape. faster movement adds more heat
 function shapeMove(event, hotSpots) {
-  // ignores movement is the pointer isn't inside the shape
+  // ignores movement if the pointer isn't inside the shape
   if (!hotSpots.isInside) {
     return;
   }
@@ -219,16 +219,16 @@ function shapeMove(event, hotSpots) {
 // ---------- Setup ----------
 // Setup is run once, at the start of the program. It sets everything up for us!
 function setup() {
-  // Initialize each shape and attaches it's listener
+  // Initialize each shape and attaches its listener
   for (let i = 0; i < hotSpots.length; i++) {
-    // gives each shape it's starting position, size and color
+    // gives each shape its starting position, size and color
     let shape = hotSpots[i].shape;
     shape.setPosition(hotSpots[i].position.x, hotSpots[i].position.y);
     shape.setSize(settings.minSize);
     shape.setColour(settings.coldHue);
 
-    // listents for the pointer entering, leaving and moving over this shape
-    // the arrow function pass along hotSpots[i] so each handler knows whoch shape it belongs to 
+    // listens for the pointer entering, leaving and moving over this shape
+    // the arrow function pass along hotSpots[i] so each handler knows which shape it belongs to
     shape.element.addEventListener("pointerenter", (event) =>
       shapeEnter(event, hotSpots[i]),
     );
