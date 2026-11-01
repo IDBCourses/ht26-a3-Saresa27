@@ -25,32 +25,35 @@ import { createShape } from "./shape.js";
 
 // ---------- Settings ----------
 const settings = {
-  heatGain: 0.03,
-  coolRate: 0.009,
-  passiveHeatRate: 0.005,
-  minSize: 100, // minimum size value
-  maxSize: 200, // max size value
-  minVolume: -20,
-  maxVolume: 0,
-  coldHue: 200,
-  hotHue: 10,
+  heatGain: 0.02, // how much heat is added per unit of pointer speed
+  coolRate: 0.008, // how much heat is lost every update when the pointer is away
+  passiveHeatRate: 0.005, // how much heat is gained every update while the pointer rests inside of a circle
+  minSize: 150, // minimum size value when shape is cold
+  maxSize: 300, // max size value when fully hot
+  minVolume: -20, // quietest volume when cold
+  maxVolume: 0, // loudest volume when fully hot
+  coldHue: 200, // color hue when cold (blue)
+  hotHue: 10, // color hue when hot (red)
 };
 
 // ---------- State ----------
 // State variables are the parts of your program that change over time.
-// For example: where the pointer is, how fast it's moving, or whether a drone is on.
+
+// Last known pointer position and time, used to calculate pointer speed
 let lastX = 0;
 let lastY = 0;
 let lastTime = 0;
+
+// Each hot spot's properties
 let hotSpots = [
   {
-    isInside: false,
-    isPlaying: false,
-    heat: 0,
-    position: { x: 0.4, y: 0.4 },
-    note: "C4",
-    shape: createShape(),
-    synth: new Tone.PolySynth(Tone.Synth).toDestination(),
+    isInside: false, // is the pointer currently over the shape?
+    isPlaying: false, // is the note currently sounding?
+    heat: 0, // 0 (cold) to 1 (hot), what makes the shape grow, change color, and volume
+    position: { x: 0.35, y: 0.4 }, // poisition of the shape
+    note: "C4", // the note the shape plays
+    shape: createShape(), // the visual element
+    synth: new Tone.PolySynth(Tone.Synth).toDestination(), // the sound source for this shape
   },
   {
     isInside: false,
@@ -65,7 +68,7 @@ let hotSpots = [
     isInside: false,
     isPlaying: false,
     heat: 0,
-    position: { x: 0.6, y: 0.4 },
+    position: { x: 0.65, y: 0.4 },
     note: "G4",
     shape: createShape(),
     synth: new Tone.PolySynth(Tone.Synth).toDestination(),
@@ -77,6 +80,7 @@ let hotSpots = [
 function update() {
   setTimeout(update, 10); // schedule next call
 
+  // go through every hot spot and heat it up or cool it down
   for (let i = 0; i < hotSpots.length; i++) {
     if (hotSpots[i].isInside === true) {
       if (hotSpots[i].heat < 1) {
@@ -107,11 +111,14 @@ function use() {
   for (let i = 0; i < hotSpots.length; i++) {
     let heat = hotSpots[i].heat;
     // Use heat to scale the shape size between "min" and "max"
+    // heat 0 gives min size, heat 1 gives max size
     let shape = hotSpots[i].shape;
     let size = settings.minSize + (settings.maxSize - settings.minSize) * heat;
     shape.setSize(size);
 
     // Keep the shape positioned on its center
+    // The size is in pixels, convert it to a fraction of the screen first
+    // Then move the shape left and up by half its size so it grows from the middle of the shape
     const sizeXNorm = size / window.innerWidth;
     const sizeYNorm = size / window.innerHeight;
     shape.setPosition(
@@ -119,16 +126,17 @@ function use() {
       hotSpots[i].position.y - sizeYNorm / 2,
     );
 
-    // Change color
+    // Change color, from cold hue to hot hue as heat goes from 0 to 1
     shape.setColour(
       settings.coldHue + (settings.hotHue - settings.coldHue) * heat,
     );
 
-    // Change volume
+    // Change volume, from quiet volume to loud volume as heat goes from 0 to 1
     let synth = hotSpots[i].synth;
     synth.volume.value =
       settings.minVolume + heat * (settings.maxVolume - settings.minVolume);
 
+    // stops the note once the shape has fully cooled down and the pointer is gone
     let playing = hotSpots[i].isPlaying;
     let inside = hotSpots[i].isInside;
     if (playing && !inside && heat === 0) {
@@ -144,6 +152,7 @@ function pointerDown(event) {
   Tone.start(); // browsers only allow sound after the player has pressed something
 }
 
+// converts a pixel position into a fraction of the screen (0 to 1), so math doesn't depend on the window size.
 function normalizePosition(x, y) {
   return {
     x: x / window.innerWidth,
@@ -151,24 +160,31 @@ function normalizePosition(x, y) {
   };
 }
 
+// runs when the pointer enters a shape.
 function shapeEnter(event, hotSpots) {
   hotSpots.isInside = true;
+  // remembers where and when the pointer entered, so first speed measurement has something to compare to
   const normPos = normalizePosition(event.x, event.y);
   lastX = normPos.x;
   lastY = normPos.y;
   lastTime = Date.now();
 
+  // starts the note, but only if it isn't already sounding
   if (!hotSpots.isPlaying) {
     hotSpots.synth.triggerAttack(hotSpots.note); // play the note
     hotSpots.isPlaying = true;
   }
 }
 
+// Runs when the pointer leaves a shape. The note keeps playing while the shape cools down
+// update() handles the cooling and use() releases the note once heat reaches 0
 function shapeLeave(hotSpots) {
   hotSpots.isInside = false;
 }
 
+// Runs every time the pointer moves over a shpae. faster movement adds more heat
 function shapeMove(event, hotSpots) {
+  // ignores movement is the pointer isn't inside the shape
   if (!hotSpots.isInside) {
     return;
   }
@@ -184,11 +200,13 @@ function shapeMove(event, hotSpots) {
     return;
   }
 
+  // speed = distance / time (in screen-widths per second)
   let speed = distance / seconds;
   lastX = normPos.x; // saving last normalX value
   lastY = normPos.y; // saving last normalY value
   lastTime = now; // all three save the position so the next event can compare against them
 
+  // add heat in proportion to speed, faster movement means more heat
   if (hotSpots.heat < 1) {
     // heat up if heat is less than 1
     hotSpots.heat += speed * settings.heatGain;
@@ -203,11 +221,14 @@ function shapeMove(event, hotSpots) {
 function setup() {
   // Initialize each shape and attaches it's listener
   for (let i = 0; i < hotSpots.length; i++) {
+    // gives each shape it's starting position, size and color
     let shape = hotSpots[i].shape;
     shape.setPosition(hotSpots[i].position.x, hotSpots[i].position.y);
     shape.setSize(settings.minSize);
     shape.setColour(settings.coldHue);
 
+    // listents for the pointer entering, leaving and moving over this shape
+    // the arrow function pass along hotSpots[i] so each handler knows whoch shape it belongs to 
     shape.element.addEventListener("pointerenter", (event) =>
       shapeEnter(event, hotSpots[i]),
     );
