@@ -1,21 +1,21 @@
 # My instrument
 
-**Play it here:** <!-- Paste your GitHub Pages link here, e.g. https://idbcourses.github.io/your-repo-name/ -->
+**Play it here:**  https://idbcourses.github.io/ht26-a3-Saresa27/
 
-**Name:** <!-- Your name and MAU ID -->
+Samantha Sawyer - as5138
 
-<!-- One or two sentences: what kind of instrument is it, and what is it like to play? -->
+Three round shapes, each tuned to a note in the C major chord. Move your mouse into a circle and watch it slowly grow, get louder and change color. Move your mouse back and forth quickly inside the circle to make it get bigger quicker. Leave the circle and watch it shrink back to size while getting quieter and returning to blue.
 
 ## How to play
 
-<!-- Fill in the table with a row for everything the player can do with the pointer: clicking, moving slowly or fast, moving in circles, holding still... Say what happens to the sound and to the shapes. If you added keys, give them rows too. -->
 
-| When you...  | The sound...                         | The shapes... |
+| Click the browser| Allows sound to play | Nothing
 | ------------ | ------------------------------------ | ------------- |
-| Click or tap | Plays a C4 (the example: replace it) | Nothing yet   |
-|              |                                      |               |
+| Enter the circle | A note will play and get louder | Circle grows slowly and changes color from blue to red |
+| Move the mouse quickly within a circle | A note will play | The circle will grow quicker and change color faster |
+| Move mouse outside of circle | Sound will get quieter until its off | The circle will shrink and go back to blue |
 
-<!-- Anything else a player needs to know: how to get started, a good thing to try first. -->
+
 
 ---
 
