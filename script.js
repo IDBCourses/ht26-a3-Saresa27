@@ -41,7 +41,7 @@ const settings = {
 let lastX = 0;
 let lastY = 0;
 let lastTime = 0;
-let hotSpot = [
+let hotSpots = [
   {
     isInside: false,
     isPlaying: false,
@@ -77,13 +77,13 @@ let hotSpot = [
 function update() {
   setTimeout(update, 10); // schedule next call
 
-  for (let i = 0; i < hotSpot.length; i++) {
-    if (hotSpot[i].heat > 0) {
+  for (let i = 0; i < hotSpots.length; i++) {
+    if (hotSpots[i].heat > 0) {
       // cooldown while heat is postive
-      hotSpot[i].heat -= settings.coolRate;
-      if (hotSpot[i].heat < 0)
+      hotSpots[i].heat -= settings.coolRate;
+      if (hotSpots[i].heat < 0)
         // sets a floor for heat so it doesn't go below 0
-        hotSpot[i].heat = 0;
+        hotSpots[i].heat = 0;
     }
   }
 }
@@ -93,10 +93,10 @@ function update() {
 function use() {
   setTimeout(use, 10); // schedule next call
 
-  for (let i = 0; i < hotSpot.length; i++) {
-    let heat = hotSpot[i].heat;
+  for (let i = 0; i < hotSpots.length; i++) {
+    let heat = hotSpots[i].heat;
     // Use heat to scale the shape size between "min" and "max"
-    let shape = hotSpot[i].shape;
+    let shape = hotSpots[i].shape;
     let size = settings.minSize + (settings.maxSize - settings.minSize) * heat;
     shape.setSize(size);
 
@@ -104,8 +104,8 @@ function use() {
     const sizeXNorm = size / window.innerWidth;
     const sizeYNorm = size / window.innerHeight;
     shape.setPosition(
-      hotSpot[i].position.x - sizeXNorm / 2,
-      hotSpot[i].position.y - sizeYNorm / 2,
+      hotSpots[i].position.x - sizeXNorm / 2,
+      hotSpots[i].position.y - sizeYNorm / 2,
     );
 
     // Change color
@@ -114,15 +114,15 @@ function use() {
     );
 
     // Change volume
-    let synth = hotSpot[i].synth;
+    let synth = hotSpots[i].synth;
     synth.volume.value =
       settings.minVolume + heat * (settings.maxVolume - settings.minVolume);
 
-    let playing = hotSpot[i].isPlaying;
-    let inside = hotSpot[i].isInside;
+    let playing = hotSpots[i].isPlaying;
+    let inside = hotSpots[i].isInside;
     if (playing && !inside && heat === 0) {
-      synth.triggerRelease(hotSpot[i].note);
-      hotSpot[i].isPlaying = false;
+      synth.triggerRelease(hotSpots[i].note);
+      hotSpots[i].isPlaying = false;
     }
   }
 }
@@ -140,27 +140,27 @@ function normalizePosition(x, y) {
   };
 }
 
-function shapeEnter(event, hotSpot) {
-  hotSpot.isInside = true;
+function shapeEnter(event, hotSpots) {
+  hotSpots.isInside = true;
   const normPos = normalizePosition(event.x, event.y);
   lastX = normPos.x;
   lastY = normPos.y;
   lastTime = Date.now();
 
-  if (!hotSpot.isPlaying) {
-    hotSpot.synth.triggerAttack(hotSpot.note); // play the note
-    hotSpot.isPlaying = true;
+  if (!hotSpots.isPlaying) {
+    hotSpots.synth.triggerAttack(hotSpots.note); // play the note
+    hotSpots.isPlaying = true;
   }
 }
 
 
-function shapeLeave(hotSpot) {
-  hotSpot.isInside = false;
+function shapeLeave(hotSpots) {
+  hotSpots.isInside = false;
 }
 
 
-function shapeMove(event, hotSpot) {
-  if (!hotSpot.isInside) {
+function shapeMove(event, hotSpots) {
+  if (!hotSpots.isInside) {
     return;
   }
 
@@ -180,12 +180,12 @@ function shapeMove(event, hotSpot) {
   lastY = normPos.y; // saving last normalY value
   lastTime = now; // all three save the position so the next event can compare against them
 
-  if (hotSpot.heat < 1) {
+  if (hotSpots.heat < 1) {
     // heat up if heat is less than 1
-    hotSpot.heat += speed * settings.heatGain;
-    if (hotSpot.heat > 1)
+    hotSpots.heat += speed * settings.heatGain;
+    if (hotSpots.heat > 1)
       // sets a cap for heat so it doesn't go above 1
-      hotSpot.heat = 1;
+      hotSpots.heat = 1;
   }
 }
 
@@ -193,15 +193,15 @@ function shapeMove(event, hotSpot) {
 // Setup is run once, at the start of the program. It sets everything up for us!
 function setup() {
   // Initialize each shape and attaches it's listener
-  for (let i = 0; i < hotSpot.length; i++) {
-    let shape = hotSpot[i].shape;
-    shape.setPosition(hotSpot[i].position.x, hotSpot[i].position.y);
+  for (let i = 0; i < hotSpots.length; i++) {
+    let shape = hotSpots[i].shape;
+    shape.setPosition(hotSpots[i].position.x, hotSpots[i].position.y);
     shape.setSize(settings.minSize);
     shape.setColour(settings.coldHue);
 
-    shape.element.addEventListener("pointerenter", (event) => shapeEnter(event, hotSpot[i]));
-    shape.element.addEventListener("pointerleave", () => shapeLeave(hotSpot[i]));
-    shape.element.addEventListener("pointermove", (event) => shapeMove(event, hotSpot[i]));
+    shape.element.addEventListener("pointerenter", (event) => shapeEnter(event, hotSpots[i]));
+    shape.element.addEventListener("pointerleave", () => shapeLeave(hotSpots[i]));
+    shape.element.addEventListener("pointermove", (event) => shapeMove(event, hotSpots[i]));
   }
 
   window.addEventListener("pointerdown", pointerDown); // event listener for pointer down on the window
