@@ -25,8 +25,9 @@ import { createShape } from "./shape.js";
 
 // ---------- Settings ----------
 const settings = {
-  heatGain: 0.05,
-  coolRate: 0.01,
+  heatGain: 0.03,
+  coolRate: 0.009,
+  passiveHeatRate: 0.005,
   minSize: 100, // minimum size value
   maxSize: 200, // max size value
   minVolume: -20,
@@ -71,19 +72,29 @@ let hotSpots = [
   },
 ];
 
-
 // ---------- Update ----------
 // Update the state. This is called every 10ms.
 function update() {
   setTimeout(update, 10); // schedule next call
 
   for (let i = 0; i < hotSpots.length; i++) {
-    if (hotSpots[i].heat > 0) {
-      // cooldown while heat is postive
-      hotSpots[i].heat -= settings.coolRate;
-      if (hotSpots[i].heat < 0)
-        // sets a floor for heat so it doesn't go below 0
-        hotSpots[i].heat = 0;
+    if (hotSpots[i].isInside === true) {
+      if (hotSpots[i].heat < 1) {
+        // heat up while mouse is inside
+        hotSpots[i].heat += settings.passiveHeatRate;
+        if (hotSpots[i].heat > 1)
+          // sets a ceiling for heat so it doesn't go above 1
+          hotSpots[i].heat = 1;
+      }
+    } else {
+      // shrinks slowly
+      if (hotSpots[i].heat > 0) {
+        // cooldown while heat is postive
+        hotSpots[i].heat -= settings.coolRate;
+        if (hotSpots[i].heat < 0)
+          // sets a floor for heat so it doesn't go below 0
+          hotSpots[i].heat = 0;
+      }
     }
   }
 }
@@ -153,11 +164,9 @@ function shapeEnter(event, hotSpots) {
   }
 }
 
-
 function shapeLeave(hotSpots) {
   hotSpots.isInside = false;
 }
-
 
 function shapeMove(event, hotSpots) {
   if (!hotSpots.isInside) {
@@ -199,9 +208,15 @@ function setup() {
     shape.setSize(settings.minSize);
     shape.setColour(settings.coldHue);
 
-    shape.element.addEventListener("pointerenter", (event) => shapeEnter(event, hotSpots[i]));
-    shape.element.addEventListener("pointerleave", () => shapeLeave(hotSpots[i]));
-    shape.element.addEventListener("pointermove", (event) => shapeMove(event, hotSpots[i]));
+    shape.element.addEventListener("pointerenter", (event) =>
+      shapeEnter(event, hotSpots[i]),
+    );
+    shape.element.addEventListener("pointerleave", () =>
+      shapeLeave(hotSpots[i]),
+    );
+    shape.element.addEventListener("pointermove", (event) =>
+      shapeMove(event, hotSpots[i]),
+    );
   }
 
   window.addEventListener("pointerdown", pointerDown); // event listener for pointer down on the window
