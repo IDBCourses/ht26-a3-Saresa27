@@ -28,12 +28,12 @@ const settings = {
   heatGain: 0.02, // how much heat is added per unit of pointer speed
   coolRate: 0.008, // how much heat is lost every update when the pointer is away
   passiveHeatRate: 0.005, // how much heat is gained every update while the pointer rests inside of a circle
-  minSize: 150, // minimum size value when shape is cold
-  maxSize: 300, // max size value when fully hot
-  minVolume: -20, // quietest volume when cold
-  maxVolume: 0, // loudest volume when fully hot
-  coldHue: 200, // color hue when cold (blue)
-  hotHue: 10, // color hue when hot (red)
+  minSize: 150, // shape size when fully cold
+  maxSize: 300, // shape size when fully hot
+  minVolume: -20, // volume when fully cold
+  maxVolume: 0, // volume when fully hot
+  coldHue: 200, // color hue when fully cold
+  hotHue: 10, // color hue when fully hot
 };
 
 // ---------- State ----------
@@ -44,7 +44,7 @@ let lastX = 0;
 let lastY = 0;
 let lastTime = 0;
 
-// Each hot spot's properties
+// Full state for each shape
 let hotSpots = [
   {
     isInside: false, // is the pointer currently over the shape?
@@ -219,7 +219,7 @@ function shapeMove(event, hotSpots) {
 // ---------- Setup ----------
 // Setup is run once, at the start of the program. It sets everything up for us!
 function setup() {
-  // Initialize each shape and attaches its listener
+  // Initialize each shape and attach its listeners
   for (let i = 0; i < hotSpots.length; i++) {
     // gives each shape its starting position, size and color
     let shape = hotSpots[i].shape;
