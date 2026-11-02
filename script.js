@@ -51,7 +51,7 @@ let hotSpots = [
     isPlaying: false, // is the note currently sounding?
     heat: 0, // 0 (cold) to 1 (hot), what makes the shape grow, change color, and volume
     position: { x: 0.35, y: 0.4 }, // position of the shape
-    note: ["C4", "E4", "G4"], // the note the shape plays
+    notes: ["C4", "E4", "G4"], // the note the shape plays
     shape: createShape(), // the visual element
     synth: new Tone.PolySynth(Tone.Synth).toDestination(), // the sound source for this shape
   },
@@ -60,7 +60,7 @@ let hotSpots = [
     isPlaying: false,
     heat: 0,
     position: { x: 0.5, y: 0.5 },
-    note: ["A3", "C4", "E4"],
+    notes: ["A3", "C4", "E4"],
     shape: createShape(),
     synth: new Tone.PolySynth(Tone.Synth).toDestination(),
   },
@@ -69,7 +69,7 @@ let hotSpots = [
     isPlaying: false,
     heat: 0,
     position: { x: 0.65, y: 0.4 },
-    note: ["F3", "A3", "C4"],
+    notes: ["F3", "A3", "C4"],
     shape: createShape(),
     synth: new Tone.PolySynth(Tone.Synth).toDestination(),
   },
@@ -140,7 +140,8 @@ function use() {
     let playing = hotSpots[i].isPlaying;
     let inside = hotSpots[i].isInside;
     if (playing && !inside && heat === 0) {
-      synth.triggerRelease(hotSpots[i].note);
+      synth.triggerRelease(hotSpots[i].notes
+      );
       hotSpots[i].isPlaying = false;
     }
   }
@@ -171,7 +172,7 @@ function shapeEnter(event, hotSpots) {
 
   // starts the note, but only if it isn't already sounding
   if (!hotSpots.isPlaying) {
-    hotSpots.synth.triggerAttack(hotSpots.note); // play the note
+    hotSpots.synth.triggerAttack(hotSpots.notes); // play the note
     hotSpots.isPlaying = true;
   }
 }
