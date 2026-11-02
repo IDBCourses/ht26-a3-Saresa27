@@ -4,12 +4,12 @@
 
 Samantha Sawyer - as5138
 
-Three round shapes, each tuned to a note in the C major chord. Move your mouse into a circle and watch it slowly grow, get louder and change color. Move your mouse back and forth quickly inside the circle to make it get bigger quicker. Leave the circle and watch it shrink back to size while getting quieter and returning to blue.
+Three round shapes, each tuned to a chord. Move your mouse into a circle and watch it slowly grow, get louder and change color. Move your mouse back and forth quickly inside the circle to make it get bigger quicker. Leave the circle and watch it shrink back to size while getting quieter and returning to blue.
 
 ## How to play
 
 
-| Click the browser| Allows sound to play | Nothing
+| Click the browser| Allows sound to play | Nothing happens yet
 | ------------ | ------------------------------------ | ------------- |
 | Enter the circle | A note will play and get louder | Circle grows slowly and changes color from blue to red |
 | Move the mouse quickly within a circle | A note will play | The circle will grow quicker and change color faster |
